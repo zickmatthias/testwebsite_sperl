@@ -145,23 +145,45 @@
 
   window.addEventListener("load", initSwiper);
 
+  // ...existing code...
   function initCounters() {
     const counters = Array.from(document.querySelectorAll('.counter'));
     if (!counters.length) return;
 
-    // smoother easing: easeOutCubic
-    const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
+  // Einstellungen: min/max Dauer (ms)
+  const MIN_DURATION = 2000;   // kürzeste Laufzeit (schnell)
+  const MAX_DURATION = 8000;  // längste Laufzeit (langsam)
 
-    const animate = (el, duration = 4000) => {
-      if (el.dataset.animated) return; // only once
+    // helpers
+    const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
+    const parseTarget = el => parseInt(String(el.getAttribute('data-to') || el.textContent).replace(/\D/g, ''), 10) || 0;
+
+    // Max-Zielwert für Normalisierung
+    const maxTarget = Math.max(...counters.map(parseTarget), 1);
+
+    // Berechne Dauer pro Element (respektiert explizites data-speed)
+    counters.forEach((el, idx) => {
+      const explicit = parseInt(el.getAttribute('data-speed'), 10);
+      if (!isNaN(explicit) && explicit > 0) {
+        el._counterDuration = explicit;
+        return;
+      }
+  const target = parseTarget(el);
+  const pTarget = target / maxTarget; // 0..1
+  // Dauer nur abhängig von der Zielzahl (höhere Zahl → längere Dauer)
+  el._counterDuration = Math.round(MIN_DURATION + (MAX_DURATION - MIN_DURATION) * pTarget);
+    });
+
+    const animate = (el, duration) => {
+      if (el.dataset.animated) return;
       const rawTarget = el.getAttribute('data-to') || el.textContent;
       const target = parseInt(String(rawTarget).replace(/\D/g, ''), 10) || 0;
       const start = 0;
-      const startTime = performance.now();
-      el.textContent = start;
+      let startTime = null;
 
-      const step = (now) => {
-        const elapsed = now - startTime;
+      const step = (ts) => {
+        if (!startTime) startTime = ts;
+        const elapsed = ts - startTime;
         const progress = Math.min(elapsed / duration, 1);
         const eased = easeOutCubic(progress);
         const current = Math.ceil(start + (target - start) * eased);
@@ -170,70 +192,48 @@
           requestAnimationFrame(step);
         } else {
           el.dataset.animated = 'true';
-          el.textContent = target; // ensure exact target
+          el.textContent = target;
         }
       };
-
       requestAnimationFrame(step);
     };
 
-    // helper: check visibility and animate immediately if visible
-    const animateIfVisible = (el) => {
-      if (el.dataset.animated) return true;
-      const rect = el.getBoundingClientRect();
-      const inViewport = rect.top < window.innerHeight && rect.bottom >= 0;
-      if (inViewport) {
-        const speed = parseInt(el.getAttribute('data-speed'), 10) || 4000;
-        animate(el, speed);
-        return true;
-      }
-      return false;
-    };
-
-    // If IntersectionObserver is available, prefer it but also add orientation/resize checks
-    if ('IntersectionObserver' in window) {
-      const io = new IntersectionObserver((entries, observer) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            const el = entry.target;
-            const speed = parseInt(el.getAttribute('data-speed'), 10) || 4000;
-            animate(el, speed);
-            observer.unobserve(el);
-          }
-        });
-      }, { threshold: 0.15, rootMargin: '0px 0px -10% 0px' });
-
-      counters.forEach(c => {
-        if (!animateIfVisible(c)) {
-          io.observe(c);
+    // IntersectionObserver (reagiert zuverlässiger auf mobile, rootMargin erleichtert Trigger)
+    const io = new IntersectionObserver((entries, observer) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const el = entry.target;
+          const duration = el._counterDuration || MIN_DURATION;
+          animate(el, duration);
+          observer.unobserve(el);
         }
       });
+    }, { threshold: 0.15, rootMargin: '0px 0px -10% 0px' });
 
-      // Some mobile browsers/layout changes require a re-check (orientation change / resize)
-      const recheck = () => {
-        counters.forEach(c => {
-          if (!c.dataset.animated && animateIfVisible(c)) {
-            try { io.unobserve(c); } catch (e) { /* ignore */ }
-          }
-        });
-      };
-      window.addEventListener('orientationchange', recheck);
-      window.addEventListener('resize', recheck);
+    // Starten / beobachten
+    counters.forEach(c => {
+      // falls schon sichtbar -> sofort animieren
+      const rect = c.getBoundingClientRect();
+      const inViewport = rect.top < window.innerHeight && rect.bottom >= 0;
+      const duration = c._counterDuration || MIN_DURATION;
+      if (inViewport) {
+        animate(c, duration);
+      } else {
+        io.observe(c);
+      }
+    });
 
-    } else {
-      // Fallback for older browsers: check on scroll/resize/orientationchange
-      let ticking = false;
-      const check = () => {
-        counters.forEach(c => { if (!c.dataset.animated) animateIfVisible(c); });
-        ticking = false;
-      };
-      const onScroll = () => { if (!ticking) { ticking = true; requestAnimationFrame(check); } };
-      window.addEventListener('scroll', onScroll, { passive: true });
-      window.addEventListener('resize', onScroll);
-      window.addEventListener('orientationchange', onScroll);
-      // initial check in case some counters are already visible
-      check();
-    }
+    // Fallback: nach Resize / Orientation neu prüfen (mobile)
+    const refreshCheck = () => counters.forEach(c => {
+      if (c.dataset.animated) return;
+      const rect = c.getBoundingClientRect();
+      if (rect.top < window.innerHeight && rect.bottom >= 0) {
+        const duration = c._counterDuration || MIN_DURATION;
+        animate(c, duration);
+      }
+    });
+    window.addEventListener('resize', refreshCheck);
+    window.addEventListener('orientationchange', () => setTimeout(refreshCheck, 150));
   }
 
   window.addEventListener('load', initCounters);
