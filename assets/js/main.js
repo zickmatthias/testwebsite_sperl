@@ -151,8 +151,8 @@
     if (!counters.length) return;
 
   // Einstellungen: min/max Dauer (ms)
-  const MIN_DURATION = 2000;   // kürzeste Laufzeit (schnell)
-  const MAX_DURATION = 8000;  // längste Laufzeit (langsam)
+  const MIN_DURATION = 4000;   // kürzeste Laufzeit (schnell)
+  const MAX_DURATION = 10000;  // längste Laufzeit (langsam)
 
     // helpers
     const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
