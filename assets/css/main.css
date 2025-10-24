@@ -1751,9 +1751,11 @@ section,
 .counter-subheadline span {float: right;}  
 
 .medium-icon {
-    font-size: 40px !important;
-    margin-bottom: 15px !important;
-} 
+  display: inline-block;
+  /* optional: die gewünschte Größe */
+  font-size: 2rem;
+  line-height: 1;
+}
 
 .container{
     margin-top:1.5rem;
