@@ -1531,17 +1531,6 @@ section,
   width: 100%;
 }
 
-
-/* center images that are not inside the swiper */
-.tab-pane img,
-.real-estate-2 .tab-pane img {
-  display: block;
-  margin: 0 auto;
-  max-width: 100%;
-  height: 46rem;
-}
-
-
 .real-estate-2 .swiper-wrapper {
   height: auto;
 }
