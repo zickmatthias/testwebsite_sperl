@@ -153,7 +153,7 @@
     const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
 
     const animate = (el, duration = 4000) => {
-      if (el.dataset.animated) return; // einmalig
+      if (el.dataset.animated) return; // only once
       const rawTarget = el.getAttribute('data-to') || el.textContent;
       const target = parseInt(String(rawTarget).replace(/\D/g, ''), 10) || 0;
       const start = 0;
@@ -170,35 +170,70 @@
           requestAnimationFrame(step);
         } else {
           el.dataset.animated = 'true';
-          el.textContent = target; // sicherstellen exaktes Ziel
+          el.textContent = target; // ensure exact target
         }
       };
 
       requestAnimationFrame(step);
     };
 
-    const io = new IntersectionObserver((entries, observer) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const el = entry.target;
-          const speed = parseInt(el.getAttribute('data-speed'), 10) || 4000;
-          animate(el, speed);
-          observer.unobserve(el);
+    // helper: check visibility and animate immediately if visible
+    const animateIfVisible = (el) => {
+      if (el.dataset.animated) return true;
+      const rect = el.getBoundingClientRect();
+      const inViewport = rect.top < window.innerHeight && rect.bottom >= 0;
+      if (inViewport) {
+        const speed = parseInt(el.getAttribute('data-speed'), 10) || 4000;
+        animate(el, speed);
+        return true;
+      }
+      return false;
+    };
+
+    // If IntersectionObserver is available, prefer it but also add orientation/resize checks
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const el = entry.target;
+            const speed = parseInt(el.getAttribute('data-speed'), 10) || 4000;
+            animate(el, speed);
+            observer.unobserve(el);
+          }
+        });
+      }, { threshold: 0.15, rootMargin: '0px 0px -10% 0px' });
+
+      counters.forEach(c => {
+        if (!animateIfVisible(c)) {
+          io.observe(c);
         }
       });
-    }, { threshold: 0.25 });
 
-    counters.forEach(c => {
-      // Wenn bereits im Viewport -> sofort animieren
-      const rect = c.getBoundingClientRect();
-      const inViewport = rect.top < window.innerHeight && rect.bottom >= 0;
-      const speed = parseInt(c.getAttribute('data-speed'), 10) || 4000;
-      if (inViewport) {
-        animate(c, speed);
-      } else {
-        io.observe(c);
-      }
-    });
+      // Some mobile browsers/layout changes require a re-check (orientation change / resize)
+      const recheck = () => {
+        counters.forEach(c => {
+          if (!c.dataset.animated && animateIfVisible(c)) {
+            try { io.unobserve(c); } catch (e) { /* ignore */ }
+          }
+        });
+      };
+      window.addEventListener('orientationchange', recheck);
+      window.addEventListener('resize', recheck);
+
+    } else {
+      // Fallback for older browsers: check on scroll/resize/orientationchange
+      let ticking = false;
+      const check = () => {
+        counters.forEach(c => { if (!c.dataset.animated) animateIfVisible(c); });
+        ticking = false;
+      };
+      const onScroll = () => { if (!ticking) { ticking = true; requestAnimationFrame(check); } };
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll);
+      window.addEventListener('orientationchange', onScroll);
+      // initial check in case some counters are already visible
+      check();
+    }
   }
 
   window.addEventListener('load', initCounters);
