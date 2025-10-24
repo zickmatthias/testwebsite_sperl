@@ -237,7 +237,72 @@
   }
 
   window.addEventListener('load', initCounters);
-// ...existing code...
+
+  // Contact form AJAX submission + toast + remember
+  function initContactForm() {
+    const form = document.querySelector('.php-email-form');
+    if (!form) return;
+
+    const loading = form.querySelector('.loading');
+    const errorEl = form.querySelector('.error-message');
+    const sentEl = form.querySelector('.sent-message');
+
+    // restore saved name/email
+    try {
+      const saved = JSON.parse(localStorage.getItem('contact_form') || '{}');
+      if (saved.name) form.querySelector('[name="name"]').value = saved.name;
+      if (saved.email) form.querySelector('[name="email"]').value = saved.email;
+    } catch (e) {}
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      if (loading) loading.style.display = 'block';
+      if (errorEl) errorEl.style.display = 'none';
+      if (sentEl) sentEl.style.display = 'none';
+
+      const fd = new FormData(form);
+
+      fetch(form.action, { method: 'POST', body: fd })
+        .then(r => r.json())
+        .then(data => {
+          if (loading) loading.style.display = 'none';
+          if (data && data.success) {
+            if (sentEl) sentEl.style.display = 'block';
+            showContactToast(data.message || 'Ihre Nachricht wurde gesendet.');
+            // remember name/email
+            try {
+              const toSave = { name: form.querySelector('[name="name"]').value || '', email: form.querySelector('[name="email"]').value || '' };
+              localStorage.setItem('contact_form', JSON.stringify(toSave));
+            } catch (e) {}
+            // clear message field
+            const msg = form.querySelector('[name="message"]'); if (msg) msg.value = '';
+          } else {
+            const msg = (data && data.message) ? data.message : 'Fehler beim Senden';
+            if (errorEl) { errorEl.textContent = msg; errorEl.style.display = 'block'; }
+            showContactToast(msg, true);
+          }
+        })
+        .catch(err => {
+          if (loading) loading.style.display = 'none';
+          const msg = 'Fehler beim Senden (Netzwerk)';
+          if (errorEl) { errorEl.textContent = msg; errorEl.style.display = 'block'; }
+          showContactToast(msg, true);
+        });
+    });
+  }
+
+  function showContactToast(message, isError) {
+    const toastEl = document.getElementById('contactToast');
+    if (!toastEl) return;
+    const bsToast = bootstrap.Toast.getOrCreateInstance(toastEl);
+    const body = toastEl.querySelector('.toast-body');
+    if (body) body.textContent = message;
+    toastEl.classList.remove('bg-success','bg-danger');
+    toastEl.classList.add(isError ? 'bg-danger' : 'bg-success');
+    bsToast.show();
+  }
+
+  window.addEventListener('load', initContactForm);
 
 })();
 

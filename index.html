@@ -576,6 +576,16 @@
   <!-- Preloader -->
   <div id="preloader"></div>
 
+  <!-- Toast container for contact feedback -->
+  <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080"> 
+    <div id="contactToast" class="toast align-items-center text-white bg-dark border-0" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body">Nachricht gesendet.</div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Schließen"></button>
+      </div>
+    </div>
+  </div>
+
   <!-- Vendor JS Files -->
   <script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
   <script src="assets/vendor/php-email-form/validate.js"></script>
