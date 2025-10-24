@@ -19,10 +19,10 @@
 
 /* Global Colors - The following color variables are used throughout the website. Updating them here will change the color scheme of the entire website */
 :root { 
-  --background-color: #ffffff; /* Background color for the entire website, including individual sections */
+  --background-color: #fff7ea; /* Background color for the entire website, including individual sections */
   --default-color: #444444; /* Default color used for the majority of the text content across the entire website */
   --heading-color: #1b1b1b; /* Color for headings, subheadings and title throughout the website */
-  --accent-color: #a1524b; /* Accent color that represents your brand on the website. It's used for buttons, links, and other elements that need to stand out */
+  --accent-color: #b88428; /* Accent color that represents your brand on the website. It's used for buttons, links, and other elements that need to stand out */
   --surface-color: #ffffff; /* The surface color is used as a background of boxed elements within sections, such as cards, icon boxes, or other elements that require a visual separation from the global background. */
   --contrast-color: #ffffff; /* Contrast color for text, ensuring readability against backgrounds of accent, heading, or default colors. */
 }
@@ -1523,6 +1523,10 @@ section,
 /*--------------------------------------------------------------
 # Real Estate 2 Section
 --------------------------------------------------------------*/
+.real-estate-2 .container {
+  width: 100%;
+}
+
 .real-estate-2 .portfolio-details-slider img {
   width: 100%;
 }
