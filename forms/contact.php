@@ -1,10 +1,4 @@
 <?php
-// ...existing code...
-<?php
-// Simple contact handler using PHPMailer
-// Requires: composer require phpmailer/phpmailer
-// Configure SMTP below before use.
-
 header('Content-Type: application/json; charset=utf-8');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -13,72 +7,111 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
   exit;
 }
 
-$name    = trim($_POST['name'] ?? '');
+// load composer autoload and dotenv
+$autoload = __DIR__ . '/../vendor/autoload.php';
+if (!file_exists($autoload)) {
+  http_response_code(500);
+  echo json_encode(['success' => false, 'message' => 'Autoloader not found. Install dependencies with Composer.']);
+  exit;
+}
+require $autoload;
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+use Dotenv\Dotenv;
+
+// load .env
+$root = realpath(__DIR__ . '/..');
+if ($root && is_dir($root) && file_exists($root . '/.env')) {
+  $dotenv = Dotenv::createImmutable($root);
+  $dotenv->safeLoad();
+}
+
+// helper to read env with fallback
+function env($key, $fallback = null) {
+  if (isset($_ENV[$key])) return $_ENV[$key];
+  if (getenv($key) !== false) return getenv($key);
+  return $fallback;
+}
+
+// collect + sanitize
+$honeypot = trim($_POST['website'] ?? '');
+if ($honeypot !== '') {
+  http_response_code(400);
+  echo json_encode(['success' => false, 'message' => 'Spam detected']);
+  exit;
+}
+
+$name    = trim(strip_tags($_POST['name'] ?? ''));
 $email   = trim($_POST['email'] ?? '');
-$subject = trim($_POST['subject'] ?? 'Kontaktanfrage');
-$message = trim($_POST['message'] ?? '');
+$subject = trim(strip_tags($_POST['subject'] ?? 'Kontaktanfrage'));
+$message = trim(strip_tags($_POST['message'] ?? ''));
 
 if ($name === '' || $email === '' || $message === '') {
   http_response_code(400);
   echo json_encode(['success' => false, 'message' => 'Bitte alle Pflichtfelder ausfüllen.']);
   exit;
 }
-
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
   http_response_code(400);
-  echo json_encode(['success' => false, 'message' => 'Ungültige E‑Mail-Adresse.']);
+  echo json_encode(['success' => false, 'message' => 'Ungültige E-Mail-Adresse.']);
   exit;
 }
 
-require __DIR__ . '/../vendor/autoload.php'; // Composer autoload
+// config from .env
+$smtpHost = env('SMTP_HOST', '');
+$smtpUser = env('SMTP_USER', '');
+$smtpPass = env('SMTP_PASS', '');
+$smtpPort = env('SMTP_PORT', 587);
+$smtpSecure = env('SMTP_SECURE', 'tls');
 
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
+$recipientEmail = env('CONTACT_RECIPIENT', 'vermietung@quartier-johann-sperl.de');
+$recipientName  = env('CONTACT_RECIPIENT_NAME', 'Vermietung');
 
+$fromEmail = env('MAIL_FROM', 'no-reply@yourdomain.tld');
+$fromName  = env('MAIL_FROM_NAME', 'Kontaktformular');
+
+// send mail
 $mail = new PHPMailer(true);
-
 try {
-  // ---------- SMTP configuration (edit these) ----------
-  $useSmtp = true; // set false to try PHP mail() instead
-
-  if ($useSmtp) {
+  if ($smtpHost !== '') {
     $mail->isSMTP();
-    $mail->Host       = 'smtp.example.com';    // z.B. smtp.gmail.com
-    $mail->SMTPAuth   = true;
-    $mail->Username   = 'you@example.com';     // SMTP username
-    $mail->Password   = 'yourpassword';        // SMTP password (app password for Gmail)
-    $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // or PHPMailer::ENCRYPTION_SMTPS
-    $mail->Port       = 587;                   // 587 für TLS, 465 für SSL
+    $mail->Host = $smtpHost;
+    $mail->SMTPAuth = !empty($smtpUser);
+    if (!empty($smtpUser)) {
+      $mail->Username = $smtpUser;
+      $mail->Password = $smtpPass;
+    }
+    if (!empty($smtpSecure)) $mail->SMTPSecure = $smtpSecure;
+    $mail->Port = (int)$smtpPort;
   } else {
-    // fallback to mail()
     $mail->isMail();
   }
 
-  // ---------- Mail headers & body ----------
-  $receiving_email_address = 'contact@example.com'; // Empfänger anpassen
-  $mail->setFrom($mail->Username ?? $email, $name); // wenn SMTP, nutze Username als From
+  $mail->setFrom($fromEmail, $fromName);
   $mail->addReplyTo($email, $name);
-  $mail->addAddress($receiving_email_address);
-
-  $mail->Subject = $subject;
-  $body  = "<strong>Name:</strong> " . htmlspecialchars($name) . "<br>";
-  $body .= "<strong>Email:</strong> " . htmlspecialchars($email) . "<br>";
-  $body .= "<strong>Nachricht:</strong><br>" . nl2br(htmlspecialchars($message)) . "<br>";
-  $body .= "<hr><small>IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'n/a') . "</small>";
+  $mail->addAddress($recipientEmail, $recipientName);
 
   $mail->isHTML(true);
-  $mail->Body    = $body;
-  $mail->AltBody = strip_tags(str_replace("<br>", "\n", $body));
+  $mail->Subject = mb_substr($subject, 0, 120, 'UTF-8');
+  $mail->Body = "
+    <p><strong>Von:</strong> " . htmlspecialchars($name) . " &lt;" . htmlspecialchars($email) . "&gt;</p>
+    <p><strong>Betreff:</strong> " . htmlspecialchars($subject) . "</p>
+    <hr>
+    <p>" . nl2br(htmlspecialchars($message)) . "</p>
+    <hr>
+    <p>IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'n/a') . "</p>
+  ";
+  $mail->AltBody = strip_tags($name . "\n" . $subject . "\n\n" . $message);
 
   $mail->send();
 
-  echo json_encode(['success' => true, 'message' => 'Nachricht wurde gesendet.']);
+  echo json_encode(['success' => true, 'message' => 'Ihre Nachricht wurde gesendet.']);
   exit;
 } catch (Exception $e) {
+  error_log('Mail error: ' . $e->getMessage());
   http_response_code(500);
-  // Do not leak sensitive info in production
-  echo json_encode(['success' => false, 'message' => 'Senden fehlgeschlagen: ' . $mail->ErrorInfo]);
+  echo json_encode(['success' => false, 'message' => 'Fehler beim Senden der Nachricht.']);
   exit;
 }
 ?>
-// ...existing code...
