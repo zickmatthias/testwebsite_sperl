@@ -1404,8 +1404,8 @@ section,
   box-shadow: none;
   border-radius: 0;
   color: var(--default-color);
-  background-color: color-mix(in srgb, var(--background-color), transparent 50%);
-  border-color: color-mix(in srgb, var(--default-color), transparent 80%);
+  background-color: color-mix(in srgb, var(--background-color) 92%, var(--accent-color) 8%);
+  border-color: color-mix(in srgb, var(--default-color) 20%, transparent 80%);
 }
 
 .contact .php-email-form input[type=text]:focus,
