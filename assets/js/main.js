@@ -72,9 +72,46 @@
    */
   const preloader = document.querySelector('#preloader');
   if (preloader) {
-    window.addEventListener('load', () => {
-      preloader.remove();
-    });
+    // Prefer hiding the preloader as soon as the page is interactive
+    // (DOMContentLoaded or the first hero image ready) instead of waiting
+    // for the full window "load" which can be delayed by large assets.
+    let preloaderHidden = false;
+
+    const doHidePreloader = () => {
+      if (preloaderHidden) return;
+      preloaderHidden = true;
+      // add class for a short fade-out, then remove from DOM after transition
+      preloader.classList.add('preloader-hidden');
+      setTimeout(() => {
+        try { preloader.remove(); } catch (e) {}
+      }, 350);
+    };
+
+    // Hide on DOMContentLoaded (fast) or when the hero first image has loaded.
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', doHidePreloader, { once: true });
+    } else {
+      // already interactive
+      setTimeout(doHidePreloader, 40);
+    }
+
+    // if hero image exists, hide when it's loaded (improves LCP perceived)
+    const heroImg = document.querySelector('#hero-carousel .carousel-item.active img');
+    if (heroImg) {
+      if (heroImg.complete) {
+        // already loaded
+        doHidePreloader();
+      } else {
+        heroImg.addEventListener('load', doHidePreloader, { once: true });
+        heroImg.addEventListener('error', doHidePreloader, { once: true });
+      }
+    }
+
+    // Fallback: ensure it never stays forever (max wait)
+    setTimeout(doHidePreloader, 1200);
+
+    // Also keep the old window.load listener as a final fallback
+    window.addEventListener('load', doHidePreloader);
   }
 
   /**

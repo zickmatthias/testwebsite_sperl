@@ -530,6 +530,17 @@ h6 {
   }
 }
 
+/* Smooth fade-out for preloader when hiding early */
+#preloader {
+  transition: opacity 0.35s ease-out, visibility 0.35s ease-out;
+}
+
+#preloader.preloader-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
 /*--------------------------------------------------------------
 # Scroll Top Button
 --------------------------------------------------------------*/
