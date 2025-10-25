@@ -30,7 +30,11 @@
   <link href="assets/vendor/swiper/swiper-bundle.min.css" rel="stylesheet">
 
   <!-- Main CSS File -->
-  <link href="assets/css/main.css" rel="stylesheet">
+  <!-- preload main CSS to avoid render-blocking while ensuring stylesheet applies asap -->
+  <link rel="preload" href="assets/css/main.css" as="style" onload="this.rel='stylesheet'">
+  <noscript><link href="assets/css/main.css" rel="stylesheet"></noscript>
+  <!-- preload first hero image to improve LCP -->
+  <link rel="preload" as="image" href="assets/img/bilder/hero_1.webp">
 
   <!-- =======================================================
   * Template Name: EstateAgency
@@ -590,7 +594,29 @@
   <script src="assets/vendor/swiper/swiper-bundle.min.js" defer></script>
 
   <!-- Main JS File -->
-  <script src="assets/js/main.js"></script>
+  <!-- lazy-load helper: set loading/decoding attributes safely -->
+  <script>
+    (function(){
+      function initLazy() {
+        try {
+          var heroFirst = document.querySelector('#hero-carousel .carousel-item.active img');
+          if (heroFirst && !heroFirst.hasAttribute('loading')) heroFirst.setAttribute('loading','eager');
+          if (heroFirst && !heroFirst.hasAttribute('decoding')) heroFirst.setAttribute('decoding','async');
+
+          document.querySelectorAll('img').forEach(function(img){
+            // keep existing explicit attributes
+            if (!img.hasAttribute('loading')) img.setAttribute('loading','lazy');
+            if (!img.hasAttribute('decoding')) img.setAttribute('decoding','async');
+          });
+        } catch(e){ console.warn('lazy init', e); }
+      }
+
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initLazy);
+      else initLazy();
+    })();
+  </script>
+
+  <script src="assets/js/main.js" defer></script>
 
 </body>
 
