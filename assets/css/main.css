@@ -1745,6 +1745,18 @@ section,
   color: var(--accent-color);
 }
 
+/* Make every image inside the real-estate tab panes a centered, fixed-height floorplan */
+.real-estate-2 .tab-pane img {
+  display: block;
+  height: 70vh;    /* desired desktop height */
+  width: auto;      /* preserve aspect ratio */
+  max-width: 100%;  /* avoid overflow */
+  margin: 0 auto;   /* center horizontally */
+  object-fit: contain;
+}
+
+
+
 
 
 .counter-section i { display:block; margin:0 0 10px}
