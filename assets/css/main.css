@@ -12,9 +12,10 @@
 --------------------------------------------------------------*/
 /* Fonts */
 :root {
-  --default-font: "Roboto",  system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  --heading-font: "Raleway",  sans-serif;
-  --nav-font: "Poppins",  sans-serif;
+  /* Use Montserrat as the primary font for body, headings and nav */
+  --default-font: "Montserrat", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --heading-font: "Montserrat", sans-serif;
+  --nav-font: "Montserrat", sans-serif;
 }
 
 /* Global Colors - The following color variables are used throughout the website. Updating them here will change the color scheme of the entire website */
@@ -22,7 +23,7 @@
   --background-color: #fff7ea; /* Background color for the entire website, including individual sections */
   --default-color: #444444; /* Default color used for the majority of the text content across the entire website */
   --heading-color: #1b1b1b; /* Color for headings, subheadings and title throughout the website */
-  --accent-color: #b88428; /* Accent color that represents your brand on the website. It's used for buttons, links, and other elements that need to stand out */
+  --accent-color: #B07A3B ; /* Accent color that represents your brand on the website. It's used for buttons, links, and other elements that need to stand out */
   --surface-color: #ffffff; /* The surface color is used as a background of boxed elements within sections, such as cards, icon boxes, or other elements that require a visual separation from the global background. */
   --contrast-color: #ffffff; /* Contrast color for text, ensuring readability against backgrounds of accent, heading, or default colors. */
 }
@@ -717,7 +718,8 @@ section,
 .hero h2 {
   margin-bottom: 30px;
   font-size: 56px;
-  font-weight: 900;
+  /* use a strong but not overly heavy weight to keep Montserrat legible */
+  font-weight: 700;
   text-transform: uppercase;
 }
 
@@ -1746,7 +1748,7 @@ section,
 
 
 .counter-section i { display:block; margin:0 0 10px}
-.counter-section span.counter { font-size:40px; color:#000; line-height:60px; display:block; font-family: "Oswald",sans-serif; letter-spacing: 2px}
+.counter-section span.counter { font-size:40px; color:#000; line-height:60px; display:block; font-family: "Montserrat",sans-serif; font-weight:600; letter-spacing: 2px }
 .counter-title{ font-size:12px; letter-spacing:2px; text-transform: uppercase}
 .counter-icon {top:25px; position:relative}
 .counter-style2 .counter-title {letter-spacing: 0.55px; float: left;}
@@ -1763,13 +1765,4 @@ section,
 
 .container{
     margin-top:1.5rem;
-}
-
-
-
-/*--------------------------------------------------------------
-# Starter Section Section
---------------------------------------------------------------*/
-.starter-section {
-  /* Add your styles here */
 }
