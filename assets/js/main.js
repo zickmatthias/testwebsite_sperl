@@ -338,7 +338,7 @@
     toastEl.classList.add(isError ? 'bg-danger' : 'bg-success');
     bsToast.show();
   }
-
+  
   window.addEventListener('load', initContactForm);
 
 })();

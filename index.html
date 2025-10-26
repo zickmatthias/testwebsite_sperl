@@ -9,13 +9,7 @@
   <meta name="keywords" content="">
 
   <!-- Favicons -->
-  <link href="/assets/img/favicon-32x32.png" rel="icon" type="image/png" sizes="32x32">
-  <link rel="icon" type="image/png" sizes="16x16" href="/assets/img/favicon-16x16.png">
-  <link href="/assets/img/apple-touch-icon.png" rel="apple-touch-icon" sizes="180x180">
-  <link rel="icon" type="image/png" sizes="192x192" href="/assets/img/android-chrome-192x192.png">
-  <link rel="icon" type="image/png" sizes="512x512" href="/assets/img/android-chrome-512x512.png">
-  <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
-
+  <link rel="icon" href="/favicon.png" type="image/png" sizes="512x512">
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com" rel="preconnect">
   <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
@@ -550,7 +544,7 @@
 
         <div class="row justify-content-center">
           <div class="col-lg-8 col-md-8">
-            <form action="forms/contact.php" method="post" class="php-email-form" data-aos="fade-up" data-aos-delay="200">
+            <form action="forms/contact.php" method="post" enctype="multipart/form-data" class="php-email-form" data-aos="fade-up" data-aos-delay="200">
               <div class="row gy-4">
 
                 <div class="col-md-6">
@@ -567,6 +561,10 @@
 
                 <div class="col-md-12">
                   <textarea class="form-control" name="message" rows="6" placeholder="Nachricht" required=""></textarea>
+                </div>
+
+                <div class="col-md-12">
+                  <input class="form-control" type="file" id="formFileMultiple" name="files[]" multiple>
                 </div>
 
                 <div class="col-md-12 text-center">

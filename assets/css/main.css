@@ -1412,6 +1412,7 @@ section,
 
 .contact .php-email-form input[type=text],
 .contact .php-email-form input[type=email],
+.contact .php-email-form input[type=file],
 .contact .php-email-form textarea {
   font-size: 14px;
   padding: 10px 15px;
@@ -1424,12 +1425,14 @@ section,
 
 .contact .php-email-form input[type=text]:focus,
 .contact .php-email-form input[type=email]:focus,
+.contact .php-email-form input[type=file]:focus,
 .contact .php-email-form textarea:focus {
   border-color: var(--accent-color);
 }
 
 .contact .php-email-form input[type=text]::placeholder,
 .contact .php-email-form input[type=email]::placeholder,
+.contact .php-email-form input[type=file]::placeholder,
 .contact .php-email-form textarea::placeholder {
   color: color-mix(in srgb, var(--default-color), transparent 70%);
 }
@@ -1446,6 +1449,25 @@ section,
 .contact .php-email-form button[type=submit]:hover {
   background: color-mix(in srgb, var(--accent-color), transparent 20%);
 }
+
+.contact .php-email-form input[type=file]::file-selector-button {
+  color: var(--contrast-color);
+  background: var(--accent-color);
+  border: 0;
+  padding: 10px 30px;
+  transition: 0.4s;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.contact .php-email-form input[type=file]::file-selector-button:hover {
+  background: color-mix(in srgb, var(--accent-color), transparent 20%);
+
+}
+
+
+
 
 /*--------------------------------------------------------------
 # Real Estate Section
