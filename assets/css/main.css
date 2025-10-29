@@ -1822,3 +1822,29 @@ section,
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/*EG TABLE ROW COLORS*/
+.table tr.table-primary > * {
+  background-color: #f3e2d3 !important;
+  white-space: nowrap;
+  text-align: center;
+}
+/* 1.OG */
+.table tr.table-secondary > * {
+  background-color: #e6cdbb !important;
+  white-space: nowrap;
+  text-align: center;
+}
+/* 2.OG */
+.table tr.table-light > * {
+  background-color: #d9b7a3 !important;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.table tr.table-info > * {
+  background-color: #fff7ea !important;
+  white-space: nowrap;
+  text-align: center;
+  padding: 1rem;
+}   

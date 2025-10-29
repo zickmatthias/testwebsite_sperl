@@ -8,8 +8,19 @@
   <meta name="description" content="">
   <meta name="keywords" content="">
 
-  <!-- Favicons -->
-  <link rel="icon" href="/favicon.png" type="image/png" sizes="512x512">
+  <!-- Standard PNG favicons (relative paths + cache-bust for testing) -->
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/img/favicons/favicon-16x16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="70x70" href="assets/img/favicons/favicon-70x70.png">
+  <link rel="icon" type="image/png" sizes="96x96" href="assets/img/favicons/favicon-96x96.png">
+
+  <!-- Apple touch icons (iOS) -->
+  <link rel="apple-touch-icon" sizes="57x57" href="assets/img/favicons/apple-touch-icon-57x57.png">
+  <link rel="apple-touch-icon" sizes="60x60" href="assets/img/favicons/apple-touch-icon-60x60.png">
+  <link rel="apple-touch-icon" sizes="72x72" href="assets/img/favicons/apple-touch-icon-72x72.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="assets/img/favicons/apple-touch-icon-76x76.png">
+
+
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com" rel="preconnect">
   <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
@@ -161,9 +172,9 @@
               mit hohem Wohnwert im Münchner Süden.
             </p>
             <ul>
-              <li><i class="bi bi-check-circle"> Erdgeschoss</i><br> <span>2x barrierefreie 1-Zimmerwohnungen<br>3x 2-Zimmer-Wohnungen <br> 1x 3-Zimmer-Wohnung</span></li>
-              <li><i class="bi bi-check-circle"> 1. Obergeschoss</i><br> <span>2x barrierefreie 1-Zimmerwohnungen <br>3x 3-Zimmer-Wohnungen <br>1x barrierefreie 2-Zimmer-Wohnung</span></li>
-              <li><i class="bi bi-check-circle"> 2. Obergeschoss</i><br> <span>1x 2-Zimmer-Wohnung <br>2x 3-Zimmer-Wohnungen</span></li>
+              <li><i class="bi bi-check-circle"> 4x barrierefreie Apartments</i></li>
+              <li><i class="bi bi-check-circle"> 7x 2-Zimmer-Wohnungen</i></li>
+              <li><i class="bi bi-check-circle"> 2x 3-Zimmer-Wohnungen</i></li>
             </ul>
           </div>
 
@@ -269,15 +280,61 @@
                 <img src="assets/img/bilder/grundriss_1.webp" alt="" class="img-fluid">
               </div><!-- End Tab 2 Content -->
 
-              <div class="tab-pane fade" id="real-estate-2-tab3-g1" style="margin-top: 5rem;">
+              <div class="tab-pane fade table-responsive" id="real-estate-2-tab3-g1" style="margin-top: 5rem;">
                 <h3>Apartments (barrierefrei)</h3><br><br>
                 <p class="mb-0 text-start">
-                  <ul>
-                    <li>Nr. 02, EG – 49,28 m² – Nettomiete € 1.232,00 + NK € 158,00 = Bruttomiete € 1.390,00</li>
-                    <li>Nr. 03, EG – 49,28 m² – Nettomiete € 1.232,00 + NK € 158,00 = Bruttomiete € 1.390,00</li>
-                    <li>Nr. 08, 1. OG – 41,81 m² – Nettomiete € 1.045,00 + NK € 134,00 = Bruttomiete € 1.179,00</li>
-                    <li>Nr. 09, 1. OG – 41,81 m² – Nettomiete € 1.045,00 + NK € 134,00 = Bruttomiete € 1.179,00</li>
-                  </ul><br><br>
+                  <table class="table">
+                    <thead>
+                      <tr class="table-info">
+                        <th scope="col">Nr.</th>
+                        <th scope="col">Etage</th>
+                        <th scope="col">Wohnungstyp</th>
+                        <th scope="col">Größe</th>
+                        <th scope="col">Nettomiete</th>
+                        <th scope="col">Nebenkosten</th>
+                        <th scope="col">Bruttomiete</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr class="table-primary">
+                        <th scope="row">02</th>
+                        <td>EG</td>
+                        <td>Apartment (barrierefrei)</td>
+                        <td>ca. 49,28 m²</td>
+                        <td>€ 1.232,00</td>
+                        <td>€ 158,00</td>
+                        <td>€ 1.390,00</td>
+                      </tr>
+                      <tr class="table-primary">
+                        <th scope="row">03</th>
+                        <td>EG</td>
+                        <td>Apartment (barrierefrei)</td>
+                        <td>ca. 49,28 m²</td>
+                        <td>€ 1.232,00</td>
+                        <td>€ 158,00</td>
+                        <td>€ 1.390,00</td>
+                      </tr>
+                      <tr class="table-secondary">
+                        <th scope="row">08</th>
+                        <td>1. OG</td>
+                        <td>Apartment (barrierefrei)</td>
+                        <td>ca. 41,81 m²</td>
+                        <td>€ 1.045,00</td>
+                        <td>€ 134,00</td>
+                        <td>€ 1.179,00</td>
+                      </tr>
+                      <tr class="table-secondary">
+                        <th scope="row">09</th>
+                        <td>1. OG</td>
+                        <td>Apartment (barrierefrei)</td>
+                        <td>ca. 41,81 m²</td>
+                        <td>€ 1.045,00</td>
+                        <td>€ 134,00</td>
+                        <td>€ 1.179,00</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                    
                   <span class="fw-bold">Tiefgaragenstellplatz: Mietpreis auf Anfrage</span>
                 </p>
               </div><!-- End Tab 3 Content -->
@@ -285,15 +342,15 @@
             </div><!-- End Tab Content -->
 
           </div>
-
+ 
           <div class="col-lg-3" data-aos="fade-up" data-aos-delay="100">
             <div class="portfolio-info">
               <h3>Übersicht</h3>
               <ul>
-                <li><strong>Art </strong>1-Zimmerwohnung</li>
-                <li><strong>Größe: </strong>41,81 m² oder<br> 49,28 m²</li>
-                <li><strong>Miete: </strong>ab 1.179 € </li>
-                <li><strong>Terasse/Balkon </strong>Ja</li>
+                <li><strong>Art</strong> 1-Zimmerwohnungen</li>
+                <li><strong>Größe </strong>41,81 m² oder<br> 49,28 m²</li>
+                <li><strong>Miete </strong>ab 1.179 € </li>
+                <li><strong>Terrasse/Balkon </strong>Ja</li>
                 <li><strong>Barrierefrei </strong>Ja</li>
               </ul>
             </div>
@@ -361,35 +418,102 @@
                 <img src="assets/img/bilder/grundriss_2.webp" alt="" class="img-fluid">
               </div><!-- End Tab 2 Content -->
 
-              <div class="tab-pane fade" id="real-estate-2-tab3-g2" style="margin-top: 5rem;">
+              <div class="tab-pane fade table-responsive" id="real-estate-2-tab3-g2" style="margin-top: 5rem;">
                 <h3>2-Zimmer-Wohnungen</h3><br><br>
                 <p class="mb-0 text-start">
-                  <ul>
-                    <li>Nr. 04, EG – 59,18 m² – Nettomiete € 1.480,00 + NK € 190,00 = Bruttomiete € 1.670,00</li>
-                    <li>Nr. 05, EG – 67,22 m² – Nettomiete € 1.680,00 + NK € 215,00 = Bruttomiete € 1.895,00</li>
-                    <li>Nr. 06, EG – 62,84 m² – Nettomiete € 1.571,00 + NK € 201,00 = Bruttomiete € 1.772,00</li>
-                    <li>Nr. 10, 1. OG – 49,62 m² – Nettomiete € 1.240,00 + NK € 159,00 = Bruttomiete € 1.400,00</li>
-                    <li>Nr. 11, 1. OG – 58,57 m² – Nettomiete € 1.465,00 + NK € 188,00 = Bruttomiete € 1.653,00</li>
-                    <li>Nr. 12, 1. OG – 55,63 m² – Nettomiete € 1.390,00 + NK € 178,00 = Bruttomiete € 1.568,00</li>
-                    <li>Nr. 14, 2. OG – 62,91 m² – Nettomiete € 1.573,00 + NK € 202,00 = Bruttomiete € 1.775,00</li>
-                  </ul><br><br>
+                  <table class="table">
+                    <thead>
+                      <tr class="table-info">
+                        <th scope="col">Nr.</th>
+                        <th scope="col">Etage</th>
+                        <th scope="col">Wohnungstyp</th>
+                        <th scope="col">Größe</th>
+                        <th scope="col">Nettomiete</th>
+                        <th scope="col">Nebenkosten</th>
+                        <th scope="col">Bruttomiete</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr class="table-primary">
+                        <th scope="row">04</th>
+                        <td>EG</td>
+                        <td>2-Zimmer-Wohnung</td>
+                        <td>59,18 m²</td>
+                        <td>€ 1.480,00</td>
+                        <td>€ 190,00</td>
+                        <td>€ 1.670,00</td>
+                      </tr>
+                      <tr class="table-primary">
+                        <th scope="row">05</th>
+                        <td>EG</td>
+                        <td>2-Zimmer-Wohnung</td>
+                        <td>67,22 m²</td>
+                        <td>€ 1.680,00</td>
+                        <td>€ 215,00</td>
+                        <td>€ 1.895,00</td>
+                      </tr>
+                      <tr class="table-primary">
+                        <th scope="row">06</th>
+                        <td>EG</td>
+                        <td>2-Zimmer-Wohnung</td>
+                        <td>62,84 m²</td>
+                        <td>€ 1.571,00</td>
+                        <td>€ 201,00</td>
+                        <td>€ 1.772,00</td>
+                      </tr>
+                      <tr class="table-secondary">
+                        <th scope="row">10</th>
+                        <td>1. OG</td>
+                        <td>2-Zimmer-Wohnung</td>
+                        <td>49,62 m²</td>
+                        <td>€ 1.240,00</td>
+                        <td>€ 159,00</td>
+                        <td>€ 1.400,00</td>
+                      </tr>
+                      <tr class="table-secondary">
+                        <th scope="row">11</th>
+                        <td>1. OG</td>
+                        <td>2-Zimmer-Wohnung</td>
+                        <td>58,57 m²</td>
+                        <td>€ 1.465,00</td>
+                        <td>€ 188,00</td>
+                        <td>€ 1.653,00</td>
+                      </tr>
+                      <tr class="table-secondary">
+                        <th scope="row">12</th>
+                        <td>1. OG</td>
+                        <td>2-Zimmer-Wohnung</td>
+                        <td>55,63 m²</td>
+                        <td>€ 1.390,00</td>
+                        <td>€ 178,00</td>
+                        <td>€ 1.568,00</td>
+                      </tr>
+                      <tr class="table-light">
+                        <th scope="row">14</th>
+                        <td>2. OG</td>
+                        <td>2-Zimmer-Wohnung</td>
+                        <td>62,91 m²</td>
+                        <td>€ 1.573,00</td>
+                        <td>€ 202,00</td>
+                        <td>€ 1.775,00</td>
+                      </tr>
+                    </tbody>
+                  </table><br><br>
                   <span class="fw-bold">Tiefgaragenstellplatz: Mietpreis auf Anfrage</span>
                 </p>
               </div><!-- End Tab 3 Content -->
-
             </div><!-- End Tab Content -->
-
           </div>
 
           <div class="col-lg-3" data-aos="fade-up" data-aos-delay="100">
             <div class="portfolio-info">
               <h3>Übersicht</h3>
               <ul>
-                <li><strong>Art </strong>2-Zimmer-Wohnung</li>
+                <li><strong>Art </strong>2-Zimmer-Wohnungen</li>
                 <li><strong>Größe </strong>49,62 m² - 67,22 m²</li>
-                <li><strong>Miete </strong>ab 1.300 €</li>
-                <li><strong>Terasse/Balkon </strong>Ja</li>
-                <li><strong>Barrierefrei </strong>Ja</li>
+                <li><strong>Miete </strong>ab 1.400 €</li>
+                <li><strong>Terrasse/Balkon </strong>Ja</li>
+                <li><strong>Barrierefrei </strong>Nein</li>
               </ul>
             </div>
           </div>
@@ -456,15 +580,60 @@
                 <img src="assets/img/bilder/grundriss_3.webp" alt="" class="img-fluid">
               </div><!-- End Tab 2 Content -->
 
-              <div class="tab-pane fade" id="real-estate-2-tab3-g3" style="margin-top: 5rem;">
+              <div class="tab-pane fade table-responsive" id="real-estate-2-tab3-g3" style="margin-top: 5rem;">
                 <h3>3-Zimmer-Wohnungen</h3><br><br>
                 <p class="mb-0 text-start">
-                  <ul>
-                    <li>Nr. 01, EG – 83,01 m² – Nettomiete € 1.909,00 + NK € 266,00 = Bruttomiete € 2.175,00</li>
-                    <li>Nr. 07, 1. OG – 73,90 m² – Nettomiete € 1.700,00 + NK € 237,00 = Bruttomiete € 1.937,00</li>
-                    <li>Nr. 13, 2. OG – 83,05 m² – Nettomiete € 1.910,00 + NK € 266,00 = Bruttomiete € 2.176,00</li>
-                    <li>Nr. 15, 2. OG – 81,12 m² – Nettomiete € 1.865,00 + NK € 260,00 = Bruttomiete € 2.125,00</li>
-                  </ul><br><br>
+                  <table class="table">
+                      <thead>
+                        <tr class="table-info">
+                          <th scope="col">Nr.</th>
+                          <th scope="col">Etage</th>
+                          <th scope="col">Wohnungstyp</th>
+                          <th scope="col">Größe</th>
+                          <th scope="col">Nettomiete</th>
+                          <th scope="col">Nebenkosten</th>
+                          <th scope="col">Bruttomiete</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr class="table-primary">
+                          <th scope="row">01</th>
+                          <td>EG</td>
+                          <td>3-Zimmer-Wohnung</td>
+                          <td>83,01 m²</td>
+                          <td>€ 1.909,00</td>
+                          <td>€ 266,00</td>
+                          <td>€ 2.175,00</td>
+                        </tr>
+                        <tr class="table-secondary">
+                          <th scope="row">07</th>
+                          <td>1. OG</td>
+                          <td>3-Zimmer-Wohnung</td>
+                          <td>73,90 m²</td>
+                          <td>€ 1.700,00</td>
+                          <td>€ 237,00</td>
+                          <td>€ 1.937,00</td>
+                        </tr>
+                        <tr class="table-light">
+                          <th scope="row">13</th>
+                          <td>2. OG</td>
+                          <td>3-Zimmer-Wohnung</td>
+                          <td>83,05 m²</td>
+                          <td>€ 1.910,00</td>
+                          <td>€ 266,00</td>
+                          <td>€ 2.176,00</td>
+                        </tr>
+                        <tr class="table-light">
+                          <th scope="row">15</th>
+                          <td>2. OG</td>
+                          <td>3-Zimmer-Wohnung</td>
+                          <td>81,12 m²</td>
+                          <td>€ 1.865,00</td>
+                          <td>€ 260,00</td>
+                          <td>€ 2.125,00</td>
+                        </tr>
+                      </tbody>
+                    </table><br><br>
                   <span class="fw-bold">Tiefgaragenstellplatz: Mietpreis auf Anfrage</span>
                 </p>
               </div><!-- End Tab 3 Content -->
@@ -477,10 +646,11 @@
             <div class="portfolio-info">
               <h3>Übersicht</h3>
               <ul>
-                <li><strong>Art</strong> 3-Zimmer-Wohnung</li>
+                <li><strong>Art</strong> 3-Zimmer-Wohnungen</li>
                 <li><strong>Größe</strong> 73,90 m² - 83,05 m² </li>
-                <li><strong>Preis</strong> ab 1.715 €</li>
-                <li><strong>Terasse/Balkon</strong> Ja </li>
+                <li><strong>Preis</strong> ab 1.937 €</li>
+                <li><strong>Terrasse/Balkon</strong> Ja </li>
+                <li><strong>Barrierefrei</strong> Nein</li>
               </ul>
             </div>
           </div>
@@ -517,8 +687,8 @@
               </ul>
 
               <span class="fw-bold">Hinweis zur Kaution:</span><br>
-              Es werden ausschließlich Barkautionen per Überweisung auf das vom Eigentümer benannte Kautionskonto akzeptiert. 
-              Bürgschaften oder Kautionsversicherungen werden nicht angenommen.<br><br>
+              Es werden ausschließlich Kautionszahlungen/Sicherheitsleistungen per Überweisung auf das vom Eigentümer benannte Kautionskonto (Treuhandkonto) akzeptiert. 
+              Bürgschaften;<br> Sparbücher oder Kautionsversicherungen werden nicht angenommen.<br><br>
 
               <span class="fw-bold">
                 Bitte geben Sie bei Ihrer Anfrage stets die Wohnungsnummer sowie den gewünschten Mietbeginn an,
