@@ -1,229 +1,233 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
 
-// Contact handler using mailjet/mailjet-apiv3-php client (preferred)
-// Falls back to HTTP cURL if the client class is not present.
+require __DIR__ . '/../vendor/autoload.php';
+use Dotenv\Dotenv;
 
-$logFile = __DIR__ . '/../tmp/contact_debug.log';
-if (!is_dir(dirname($logFile))) { @mkdir(dirname($logFile), 0755, true); }
+// .env laden
+Dotenv::createImmutable(__DIR__ . '/..')->load();
 
-$root = realpath(__DIR__ . '/..');
-if ($root && is_dir($root) && file_exists($root . '/vendor/autoload.php')) {
-  require_once $root . '/vendor/autoload.php';
-  if (class_exists('\Dotenv\Dotenv')) {
-    try { \Dotenv\Dotenv::createImmutable($root)->safeLoad(); } catch (Throwable $e) {}
-  }
+$WORKER_URL   = getenv('MAILJET_WORKER_URL');
+$WORKER_TOKEN = getenv('WORKER_TOKEN');
+
+// Fallback: wenn dotenv nicht geladen (z. B. builtin PHP server), versuche .env manuell zu parsen
+if (!$WORKER_URL || !$WORKER_TOKEN) {
+    $envFile = __DIR__ . '/../.env';
+    if (is_readable($envFile)) {
+        $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if ($line === '' || $line[0] === '#') continue;
+            if (strpos($line, '=') === false) continue;
+            list($k, $v) = explode('=', $line, 2);
+            $k = trim($k);
+            $v = trim($v);
+            // remove surrounding quotes
+            if ((substr($v,0,1) === '"' && substr($v,-1) === '"') || (substr($v,0,1) === "'" && substr($v,-1) === "'")) {
+                $v = substr($v,1,-1);
+            }
+            // put into getenv/$_ENV/$_SERVER
+            putenv(sprintf('%s=%s', $k, $v));
+            $_ENV[$k] = $v;
+            $_SERVER[$k] = $v;
+        }
+        // reload
+        $WORKER_URL   = getenv('MAILJET_WORKER_URL');
+        $WORKER_TOKEN = getenv('WORKER_TOKEN');
+    }
 }
 
-function env($k, $d = null) {
-  // Check common places: $_ENV, $_SERVER, then getenv().
-  if (isset($_ENV[$k]) && $_ENV[$k] !== '') return $_ENV[$k];
-  if (isset($_SERVER[$k]) && $_SERVER[$k] !== '') return $_SERVER[$k];
-  $v = getenv($k);
-  return $v === false ? $d : $v;
+// If still missing, return a helpful error showing which keys are absent (no secret values)
+if (!$WORKER_URL || !$WORKER_TOKEN) {
+    $have_url = $WORKER_URL ? true : false;
+    $have_token = $WORKER_TOKEN ? true : false;
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Worker nicht konfiguriert.',
+        'have' => [
+            'MAILJET_WORKER_URL' => $have_url,
+            'WORKER_TOKEN' => $have_token,
+            'env_file_found' => is_readable(__DIR__ . '/../.env')
+        ]
+    ]);
+    exit;
 }
-function log_debug($data) { global $logFile; @file_put_contents($logFile, date('c') . ' ' . json_encode($data) . PHP_EOL, FILE_APPEND); }
 
-// Basic request validation
-$rawInput = file_get_contents('php://input');
-$method = $_SERVER['REQUEST_METHOD'] ?? '';
-if ($method !== 'POST' && empty($_POST) && empty($rawInput)) { http_response_code(405); echo json_encode(['success'=>false,'message'=>'Method not allowed']); exit; }
+// Nur POST
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(['success'=>false,'message'=>'Only POST allowed']);
+    exit;
+}
 
-$honeypot = trim($_POST['website'] ?? '');
-if ($honeypot !== '') { http_response_code(400); echo json_encode(['success'=>false,'message'=>'Spam detected']); exit; }
-
-$name    = trim(strip_tags($_POST['name'] ?? ''));
+// Formulardaten
+$name    = trim($_POST['name'] ?? '');
 $email   = trim($_POST['email'] ?? '');
-$subject = trim(strip_tags($_POST['subject'] ?? 'Kontaktanfrage'));
+$subject = trim($_POST['subject'] ?? 'Kontaktanfrage');
+$subject = preg_replace('/[\r\n]+/',' ', $subject);
 $message = trim($_POST['message'] ?? '');
 
-if ($name === '' || $email === '' || $message === '') { http_response_code(400); echo json_encode(['success'=>false,'message'=>'Bitte alle Pflichtfelder ausfüllen.']); exit; }
-if (!filter_var($email, FILTER_VALIDATE_EMAIL)) { http_response_code(400); echo json_encode(['success'=>false,'message'=>'Ungültige E-Mail-Adresse.']); exit; }
+if (!$name || !$email || !$message || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    http_response_code(400);
+    echo json_encode(['success'=>false,'message'=>'Bitte gültige Daten eingeben.']);
+    exit;
+}
 
-$mjPublic  = env('MJ_APIKEY_PUBLIC', env('SMTP_USER'));
-$mjPrivate = env('MJ_APIKEY_PRIVATE', env('SMTP_PASS'));
-$recipient = env('CONTACT_RECIPIENT', 'vermietung@quartier-johann-sperl.de');
-$recipientName = env('CONTACT_RECIPIENT_NAME', 'Vermietung');
-$fromEmail = env('MAIL_FROM', 'no-reply@raikowski.me');
-$fromName  = env('MAIL_FROM_NAME', 'Kontaktformular');
-
-// Log incoming request info: POST keys, FILES contents, content type and PHP upload limits
-log_debug([
-  'incoming' => [
-    'ip' => $_SERVER['REMOTE_ADDR'] ?? null,
-    'post_keys' => array_keys($_POST),
-    'files' => $_FILES,
-    'content_type' => $_SERVER['CONTENT_TYPE'] ?? ($_SERVER['HTTP_CONTENT_TYPE'] ?? null),
-    'post_max_size' => ini_get('post_max_size'),
-    'upload_max_filesize' => ini_get('upload_max_filesize'),
-    'max_file_uploads' => ini_get('max_file_uploads')
-  ]
-]);
-
-if (empty($mjPublic) || empty($mjPrivate)) { log_debug(['error'=>'Mailjet API keys missing']); http_response_code(500); echo json_encode(['success'=>false,'message'=>'Email service not configured.']); exit; }
-
-// Message body
-$textPart = $name . "\n\n" . $message;
-$htmlPart = "<p><strong>Von:</strong> " . htmlspecialchars($name) . " &lt;" . htmlspecialchars($email) . "&gt;</p>" .
-      "<p><strong>Betreff:</strong> " . htmlspecialchars($subject) . "</p><hr><p>" . nl2br(htmlspecialchars($message)) . "</p>";
-
-// Handle uploaded files and convert them to Mailjet-compatible attachments
-// Assumption: form sends files via multipart/form-data into $_FILES (any field name).
-// We'll support single and multiple file inputs. Reject files > 10 MB (Mailjet limit per file).
+// Anhänge (konvertieren zu Mailjet-kompatiblen Keys)
 $attachments = [];
-$maxFileSize = 10 * 1024 * 1024; // 10 MB per file
-try {
-  foreach ($_FILES as $field => $fileInfo) {
-    // multiple files input (name="files[]")
-    if (is_array($fileInfo['name'])) {
-      $count = count($fileInfo['name']);
-      for ($i = 0; $i < $count; $i++) {
-        $err = $fileInfo['error'][$i] ?? UPLOAD_ERR_NO_FILE;
-        if ($err !== UPLOAD_ERR_OK) continue;
-        $tmp = $fileInfo['tmp_name'][$i] ?? null;
-        if (!$tmp || !is_uploaded_file($tmp)) continue;
-        $size = $fileInfo['size'][$i] ?? 0;
-        if ($size > $maxFileSize) {
-          log_debug(['attachment_too_large' => ['field' => $field, 'name' => $fileInfo['name'][$i] ?? null, 'size' => $size]]);
-          http_response_code(400);
-          echo json_encode(['success' => false, 'message' => 'Eine hochgeladene Datei ist zu groß. Maximale Dateigröße: 10 MB.']);
-          exit;
-        }
-        $data = @file_get_contents($tmp);
-        if ($data === false) continue;
-        $contentType = $fileInfo['type'][$i] ?? (function_exists('mime_content_type') ? @mime_content_type($tmp) : 'application/octet-stream');
-        $filename = basename($fileInfo['name'][$i] ?? 'attachment');
-        $b64 = base64_encode($data);
-        // Provide both v3 and v3.1 attachment formats to be compatible with either endpoint
-        $attachments[] = [
-          'Filename' => $filename,
-          'ContentType' => $contentType,
-          // some clients/endpoints expect 'Content-type' key (v3), include both
-          'Content-type' => $contentType,
-          'Base64Content' => $b64, // v3.1
-          'Content' => $b64 // v3
-        ];
-      }
+$attachments_omitted = false;
+// Safety: limit total uploaded payload forwarded to worker (avoid extremely large requests)
+// adjust MAX_TOTAL_ATTACHMENTS_BYTES as needed (Cloudflare Worker + Mailjet limits)
+define('MAX_TOTAL_ATTACHMENTS_BYTES', 20 * 1024 * 1024); // 20 MB
+
+// support multiple possible file field names (attachments[], files[], etc.)
+$fileField = null;
+if (!empty($_FILES['attachments'])) {
+    $fileField = 'attachments';
+} elseif (!empty($_FILES['files'])) {
+    $fileField = 'files';
+} elseif (!empty($_FILES)) {
+    // fallback: take the first uploaded files field
+    reset($_FILES);
+    $firstKey = key($_FILES);
+    if ($firstKey) $fileField = $firstKey;
+}
+
+if ($fileField) {
+    $files = $_FILES[$fileField];
+    $names = is_array($files['name']) ? $files['name'] : [$files['name']];
+    $tmp   = is_array($files['tmp_name']) ? $files['tmp_name'] : [$files['tmp_name']];
+    $types = is_array($files['type']) ? $files['type'] : [$files['type']];
+    $sizes = is_array($files['size']) ? $files['size'] : [$files['size']];
+
+    $totalSize = array_sum(array_map('intval', $sizes));
+    if ($totalSize > MAX_TOTAL_ATTACHMENTS_BYTES) {
+        // skip attachments but keep processing; signal in body
+        $attachments = [];
+        $attachments_omitted = true;
     } else {
-      // single file input
-      $err = $fileInfo['error'] ?? UPLOAD_ERR_NO_FILE;
-      if ($err !== UPLOAD_ERR_OK) continue;
-      $tmp = $fileInfo['tmp_name'] ?? null;
-      if (!$tmp || !is_uploaded_file($tmp)) continue;
-      $size = $fileInfo['size'] ?? 0;
-      if ($size > $maxFileSize) {
-        log_debug(['attachment_too_large' => ['field' => $field, 'name' => $fileInfo['name'] ?? null, 'size' => $size]]);
-        http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'Eine hochgeladene Datei ist zu groß. Maximale Dateigröße: 10 MB.']);
-        exit;
-      }
-      $data = @file_get_contents($tmp);
-      if ($data === false) continue;
-      $contentType = $fileInfo['type'] ?? (function_exists('mime_content_type') ? @mime_content_type($tmp) : 'application/octet-stream');
-      $filename = basename($fileInfo['name'] ?? 'attachment');
-      $b64 = base64_encode($data);
-      $attachments[] = [
-        'Filename' => $filename,
-        'ContentType' => $contentType,
-        'Content-type' => $contentType,
-        'Base64Content' => $b64,
-        'Content' => $b64
-      ];
+        $attachments_omitted = false;
+        foreach ($tmp as $i => $tmpName) {
+            if (!$tmpName || !is_uploaded_file($tmpName)) continue;
+            $data = file_get_contents($tmpName);
+            if ($data === false) continue;
+            // Mailjet expects keys: ContentType, Filename, Base64
+            $b64 = base64_encode($data);
+            // include both keys (Base64 and Base64Content) to be compatible with Mailjet client and direct API
+            $attachments[] = [
+                'ContentType' => $types[$i] ?? 'application/octet-stream',
+                'Filename' => basename($names[$i] ?? 'attachment'),
+                'Base64' => $b64,
+                'Base64Content' => $b64
+            ];
+        }
     }
-  }
-} catch (Throwable $e) {
-  log_debug(['attachment_processing_exception' => $e->getMessage()]);
-  // continue without attachments if something unexpected happens
 }
 
-// Log how many attachments we prepared (helps verify processing)
-try { log_debug(['attachments_prepared_count' => count($attachments), 'attachments_meta' => array_map(function($a){ return ['Filename'=>$a['Filename'] ?? null,'ContentType'=>$a['ContentType'] ?? null,'Size'=>isset($a['Base64Content'])?strlen($a['Base64Content']):null]; }, $attachments)]); } catch (Throwable $e) { log_debug(['attachments_log_error'=>$e->getMessage()]); }
+// E-Mail Payload
+$SENDER_EMAIL    = getenv('SENDER_EMAIL') ?: 'no-reply@yourdomain.tld';
+$RECIPIENT_EMAIL = getenv('RECIPIENT_EMAIL');
 
-// If Mailjet client class available, use it (preferred)
-if (class_exists('\Mailjet\Client')) {
-  try {
-    $mj = new \Mailjet\Client($mjPublic, $mjPrivate, true, ['version' => 'v3.1']);
-    $message = [
-      'From' => ['Email' => $fromEmail, 'Name' => $fromName],
-      'To' => [['Email' => $recipient, 'Name' => $recipientName]],
-      'Subject' => mb_substr($subject, 0, 150, 'UTF-8'),
-      'TextPart' => $textPart,
-      'HTMLPart' => $htmlPart,
-      'Headers' => ['Reply-To' => $email]
-    ];
-
-    if (!empty($attachments)) {
-      // Mailjet expects 'Attachments' inside each Message when using v3.1
-      $message['Attachments'] = $attachments;
-    }
-
-    $body = ['Messages' => [$message]];
-
-    $response = $mj->post(\Mailjet\Resources::$Email, ['body' => $body]);
-    log_debug(['mailjet_client_http' => $response->getStatus(), 'response' => $response->getData()]);
-
-    if ($response->success()) {
-      echo json_encode(['success' => true, 'message' => 'Ihre Nachricht wurde gesendet.']);
-      exit;
-    }
-
-    // client returned non-success
-    $respData = $response->getData();
-    $errMsg = $respData['ErrorMessage'] ?? json_encode($respData);
-    log_debug(['mailjet_client_failed' => $errMsg, 'raw' => $respData]);
+if (!$RECIPIENT_EMAIL) {
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Fehler beim Senden der Nachricht.']);
+    echo json_encode(['success'=>false,'message'=>'Recipient nicht gesetzt']);
     exit;
-
-  } catch (Throwable $e) {
-    log_debug(['mailjet_client_exception' => $e->getMessage()]);
-    http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Fehler beim Senden der Nachricht.']);
-    exit;
-  }
 }
 
-// Fallback to cURL if client not available
-$payloadMessage = [
-  'From' => ['Email' => $fromEmail, 'Name' => $fromName],
-  'To' => [['Email' => $recipient, 'Name' => $recipientName]],
-  'Subject' => mb_substr($subject, 0, 150, 'UTF-8'),
-  'TextPart' => $textPart,
-  'HTMLPart' => $htmlPart,
-  'Headers' => ['Reply-To' => $email]
+// optional note when attachments omitted due to size
+$attachmentsNote = '';
+if (!empty($attachments_omitted)) {
+    $attachmentsNote = "\n\nHinweis: Anhänge wurden aufgrund der Dateigröße nicht übermittelt.";
+}
+
+$messageBody = [
+    'From' => ['Email' => $SENDER_EMAIL, 'Name' => 'Kontaktformular'],
+    'To'   => [['Email' => $RECIPIENT_EMAIL, 'Name' => 'Empfänger']],
+    'Subject' => $subject,
+    'TextPart' => "Von: $name <$email>\n\n$message" . $attachmentsNote,
+    'HTMLPart' => "<p><strong>Von:</strong> ".htmlspecialchars($name)." &lt;".htmlspecialchars($email)."&gt;</p><p>".nl2br(htmlspecialchars($message))."</p>" . (!empty($attachments_omitted) ? "<p><em>Hinweis: Anhänge wurden aufgrund der Dateigröße nicht übermittelt.</em></p>" : ''),
+    'Headers' => ['Reply-To' => $email]
 ];
 
 if (!empty($attachments)) {
-  $payloadMessage['Attachments'] = $attachments;
+    $messageBody['Attachments'] = $attachments;
 }
 
-$payload = ['Messages' => [$payloadMessage]];
+$payload = ['Messages' => [$messageBody]];
 
-$ch = curl_init('https://api.mailjet.com/v3.1/send');
+// compute attachments metadata for debugging (counts, filenames, decoded sizes)
+$attachments_meta = ['count' => 0, 'total_decoded_bytes' => 0, 'files' => []];
+if (!empty($attachments)) {
+    $attachments_meta['count'] = count($attachments);
+    foreach ($attachments as $at) {
+        $fn = $at['Filename'] ?? ($at['filename'] ?? 'unknown');
+        $b64 = $at['Base64'] ?? $at['Base64Content'] ?? $at['base64'] ?? '';
+        $decoded = base64_decode($b64, true);
+        $size = ($decoded === false) ? null : strlen($decoded);
+        if ($size !== null) $attachments_meta['total_decoded_bytes'] += $size;
+        $attachments_meta['files'][] = ['filename' => $fn, 'decoded_bytes' => $size];
+    }
+}
+
+// POST an Worker
+$ch = curl_init($WORKER_URL);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    'Content-Type: application/json',
+    'x-worker-token: ' . $WORKER_TOKEN
+]);
 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
-curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-curl_setopt($ch, CURLOPT_USERPWD, $mjPublic . ':' . $mjPrivate);
 curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
 
 $response = curl_exec($ch);
-$errno = curl_errno($ch);
-$errstr = curl_error($ch);
+$errno    = curl_errno($ch);
+$errstr   = curl_error($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
 
-if ($errno) { log_debug(['mailjet_curl_error' => $errno, 'error' => $errstr]); http_response_code(500); echo json_encode(['success' => false, 'message' => 'Fehler beim Senden (HTTP client).']); exit; }
-
-$respData = json_decode($response, true);
-log_debug(['mailjet_response_http' => $httpCode, 'body' => $respData]);
-
-if ($httpCode >= 200 && $httpCode < 300 && isset($respData['Messages'][0]['Status']) && in_array(strtolower($respData['Messages'][0]['Status']), ['success','queued','sent'])) {
-  echo json_encode(['success' => true, 'message' => 'Ihre Nachricht wurde gesendet.']);
-  exit;
+if ($errno) {
+    http_response_code(502);
+    echo json_encode(['success'=>false,'message'=>'Worker request failed','err'=>$errstr]);
+    exit;
 }
 
-$errMsg = $respData['ErrorMessage'] ?? ($respData['Messages'][0]['Errors'][0]['Error'] ?? 'Unbekannter Mailjet-Fehler');
-log_debug(['mailjet_failed' => $errMsg, 'raw' => $respData]);
-http_response_code(500); echo json_encode(['success' => false, 'message' => 'Fehler beim Senden der Nachricht.']); exit;
+// Normalize worker / Mailjet response into the simple shape the frontend expects
+$decoded = json_decode($response, true);
+$out = ['success' => false, 'message' => 'Unknown error from worker', 'worker_http' => $httpCode];
 
+if ($httpCode >= 200 && $httpCode < 300) {
+    // Prefer Mailjet success detection: Messages[0].Status == 'success'
+    if (is_array($decoded) && isset($decoded['Messages']) && is_array($decoded['Messages']) && isset($decoded['Messages'][0]['Status'])) {
+        $status = strtolower($decoded['Messages'][0]['Status']);
+        if ($status === 'success' || $status === 'sent') {
+            $out['success'] = true;
+            $out['message'] = 'Nachricht gesendet.';
+        } else {
+            $out['success'] = false;
+            $out['message'] = 'Mailjet returned status: ' . $decoded['Messages'][0]['Status'];
+        }
+    } else {
+        // If Mailjet returned 2xx but doesn't follow expected shape, treat as success
+        $out['success'] = true;
+        $out['message'] = 'Nachricht gesendet.';
+    }
+} else {
+    // non-2xx -> return worker response message if present
+    $out['success'] = false;
+    if (is_array($decoded) && isset($decoded['error'])) $out['message'] = $decoded['error'];
+    elseif (is_array($decoded) && isset($decoded['Message'])) $out['message'] = $decoded['Message'];
+    else $out['message'] = 'Worker returned HTTP ' . $httpCode;
+}
+
+// expose if attachments were omitted by PHP due to size
+if (!empty($attachments_omitted)) $out['attachments_omitted'] = true;
+
+// include attachments debug metadata (non-sensitive)
+$out['attachments_meta'] = $attachments_meta;
+
+http_response_code(200);
+echo json_encode($out);
+exit;
