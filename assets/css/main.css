@@ -1751,6 +1751,11 @@ section,
   margin-left: 10px;                /* etwas enger */
 }
 
+.real-estate-2 .nav-pills li {
+  display: flex;                    /* ensure li aligns its child (a) vertically */
+  align-items: center;
+}
+
 .real-estate-2 .nav-link {
   background: none;
   display: inline-flex;               /* center label vertically */
