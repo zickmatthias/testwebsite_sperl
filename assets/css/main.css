@@ -1821,6 +1821,16 @@ section,
   color: var(--accent-color);
 }
 
+/* make list in "Rechtliche Hinweise" tab more compact */
+#real-estate-2-tab4-g1 ul.text-start {
+  margin: 0 0 0 0.5rem; /* keep slight left indent */
+  padding-left: 1rem;
+}
+#real-estate-2-tab4-g1 ul.text-start li {
+  margin-bottom: 0.25rem; /* tighter spacing between items */
+  padding: 0;
+}
+
 /* Make every image inside the real-estate tab panes a centered, fixed-height floorplan */
 .real-estate-2 .tab-pane img {
   display: block;
