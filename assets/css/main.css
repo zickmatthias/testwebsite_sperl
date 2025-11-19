@@ -1737,31 +1737,67 @@ section,
 
 .real-estate-2 .nav-pills {
   border-bottom: 1px solid color-mix(in srgb, var(--default-color), transparent 85%);
+  display: flex;
+  flex-wrap: nowrap;                 /* kein Umbruch in 2. Zeile */
+  overflow-x: hidden;               /* kein horizontal scroll */
+  -webkit-overflow-scrolling: touch;
+  gap: 0.4rem;                       /* enger zusammen */
+  padding-bottom: 6px;
+  justify-content: flex-start;
+  align-items: center;               /* vertikale Zentrierung der Pills */
 }
 
 .real-estate-2 .nav-pills li+li {
-  margin-left: 40px;
+  margin-left: 10px;                /* etwas enger */
 }
 
 .real-estate-2 .nav-link {
   background: none;
-  font-size: 18px;
+  display: inline-flex;               /* center label vertically */
+  align-items: center;                /* vertikale Zentrierung */
+  justify-content: center;
+  font-size: clamp(13px, 1.1vw, 14px); /* responsive: schrumpft auf kleinen Bildschirmen */
   font-weight: 400;
   color: var(--default-color);
-  padding: 12px 0;
-  margin-bottom: -2px;
+  padding: 8px 10px;                  /* ausgeglicheneres Padding für Mittelausrichtung */
   border-radius: 0;
+  flex: 0 1 auto;                     /* erlaubt Schrumpfen statt Overflow */
+  min-width: 0;                       /* wichtig, damit flex-shrink wirkt */
+  min-height: 36px;                   /* sorgt für konsistente Vertikalhöhe */
+  line-height: 1;                     /* sauberes Zentrieren */
+  white-space: nowrap;                /* kein interner Umbruch */
+  transition: color .12s ease, padding .12s ease, font-size .12s ease;
 }
 
 .real-estate-2 .nav-link.active {
   color: var(--accent-color);
   background: none;
-  border-bottom: 3px solid var(--accent-color);
+  border-bottom: 2px solid var(--accent-color); /* dezente Linie */
 }
 
-@media (max-width: 575px) {
+@media (max-width: 767px) {
+  .real-estate-2 .nav-pills { gap: 0.25rem; }
+  .real-estate-2 .nav-pills li+li { margin-left: 8px; }
   .real-estate-2 .nav-link {
-    font-size: 16px;
+    font-size: 12px;                /* kleiner auf Handy */
+    padding: 4px 6px;               /* kompakter */
+    min-height: 32px;
+  }
+}
+
+@media (max-width: 420px) {
+  .real-estate-2 .nav-link {
+    font-size: 11px;                /* sehr klein auf sehr schmalen Bildschirmen */
+    padding: 3px 5px;
+  }
+}
+
+/* Desktop: etwas größere, luftige Pills */
+@media (min-width: 992px) {
+  .real-estate-2 .nav-link {
+    font-size: 16px;    /* etwas größer auf Desktop */
+    padding: 10px 14px;
+    min-height: 44px;
   }
 }
 
