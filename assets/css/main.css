@@ -1784,16 +1784,17 @@ section,
   .real-estate-2 .nav-pills { gap: 0.25rem; }
   .real-estate-2 .nav-pills li+li { margin-left: 8px; }
   .real-estate-2 .nav-link {
-    font-size: 12px;                /* kleiner auf Handy */
-    padding: 4px 6px;               /* kompakter */
-    min-height: 32px;
+    font-size: 13px;                /* etwas größer auf Handy */
+    padding: 6px 8px;               /* komfortabler auf Touch-Displays */
+    min-height: 36px;
   }
 }
 
 @media (max-width: 420px) {
   .real-estate-2 .nav-link {
-    font-size: 11px;                /* sehr klein auf sehr schmalen Bildschirmen */
-    padding: 3px 5px;
+    font-size: 12px;                /* etwas größer auf sehr schmalen Bildschirmen */
+    padding: 5px 6px;
+    min-height: 34px;
   }
 }
 
