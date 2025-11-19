@@ -1841,6 +1841,15 @@ section,
   object-fit: contain;
 }
 
+/* Make the main text inside the three real-estate tab sections slightly smaller */
+.real-estate-2 .tab-pane,
+.real-estate-2 .tab-pane p,
+.real-estate-2 .portfolio-info,
+.real-estate-2 .portfolio-info p,
+.real-estate-2 .portfolio-description p {
+  font-size: 0.95rem; /* slightly smaller than the site default */
+}
+
 
 
 
